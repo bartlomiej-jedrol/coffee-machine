@@ -1,5 +1,4 @@
 """Module contains code for Virtual Coffee Machine."""
-import sys
 
 MENU = {
     "espresso": {
@@ -44,83 +43,73 @@ coins = {
 
 def print_resources_report():
     """Prints current resources values and units."""
-    water_value = resources["water"]
-    milk_value = resources["milk"]
-    coffee_value = resources["coffee"]
-    money_value = resources["money"]
-    print(f"Water: {water_value}ml")
-    print(f"Milk: {milk_value}ml")
-    print(f"Coffee: {coffee_value}g")
-    print(f"Money: ${money_value}")
+    print(f"Water: {resources['water']}ml")
+    print(f"Milk: {resources['milk']}ml")
+    print(f"Coffee: {resources['coffee']}g")
+    print(f"Money: ${resources['money']}")
 
 
-def check_depleted_resources(product):
-    """Checks if resources are depleted. Return depleted resources list."""
-    depleted_resources_list = []
-    for key, value in MENU[product]["ingredients"].items():
-        if value > resources[key]:
-            depleted_resources_list.append(key)
-    return len(depleted_resources_list) > 0, depleted_resources_list
+def is_resource_sufficient(ingredients):
+    """Returns True if resources for ingredients are available."""
+    for item in ingredients:
+        if ingredients[item] > resources[item]:
+            print(f"Sorry, there is not enough: {item}.")
+            return False
+        return True
 
 
-def calculate_coins():
-    """Calculates amount of inserted coins."""
+def process_coins():
+    """Calculates total for the inserted coins."""
     print("Please insert coins.")
-    quarters = int(input("How many quarters? "))
-    dims = int(input("How many dims? "))
-    nickles = int(input("How many nickles? "))
-    pennies = int(input("How many pennies? "))
-    amount = (
-        quarters * coins["quarters"]
-        + dims * coins["dimes"]
-        + nickles * coins["nickles"]
-        + pennies * coins["pennies"]
-    )
-    return round(amount, 2)
+    total = int(input("How many quarters? ")) * coins["quarters"]
+    total += int(input("How many dims? ")) * coins["dimes"]
+    total += int(input("How many nickles? ")) * coins["nickles"]
+    total += int(input("How many pennies? ")) * coins["pennies"]
+    return round(total, 2)
 
 
-def is_enough_money(product, amount):
+def is_enough_money(item, amount):
     """Calculates money difference between amount and cost."""
-    money_difference = amount - MENU[product]["cost"]
-    return money_difference > 0, round(money_difference, 2)
+    return amount - MENU[item]["cost"] >= 0
 
 
-def make_coffee(product):
+def process_change(amount, cost):
+    """Calculates money difference between amount and cost."""
+    print(f"Here is ${round(amount - cost, 2)} in change.")
+
+
+def make_coffee(ingredients, profit):
     """Makes a coffee. Deducts resources. Adds profit."""
-    for ingredient, ingredient_amount in MENU[product]["ingredients"].items():
-        resources[ingredient] -= ingredient_amount
-    resources["money"] += MENU[product]["cost"]
+    for ingredient in ingredients:
+        resources[ingredient] -= ingredients[ingredient]
+    resources["money"] += profit
 
 
-def run_machine():
-    """Runs the coffee machine."""
-    should_continue = True
-    while should_continue:
-        product = input(" What would you like? espresso/latte/cappuccino: ")
-        if product == "off":
-            sys.exit()
-        elif product == "report":
-            print_resources_report()
-        elif product in ("espresso", "latte", "cappuccino"):
-            depleted_resources, depleted_resources_list = check_depleted_resources(
-                product=product
-            )
-            if depleted_resources:
-                print(
-                    f"Sorry, there is not enough: {', '.join(depleted_resources_list)}."
-                )
-            elif not depleted_resources:
-                total_coins = calculate_coins()
-                enough_money, change = is_enough_money(
-                    product=product, amount=total_coins
-                )
-                if not enough_money:
-                    print("Sorry, that's not enough money.")
-                elif enough_money:
-                    if change > 0:
-                        print(f"Here is ${change} in change.")
-                    make_coffee(product)
-                    print(f"Here is your {product}. Enjoy!")
+should_continue = True
+while should_continue:
+    product = input(" What would you like? espresso/latte/cappuccino: ")
+    print("test")
+    if product == "off":
+        should_continue = False
+    elif product == "report":
+        print_resources_report()
+    elif product in ("espresso", "latte", "cappuccino"):
+        print("test1")
+        order_ingredients = MENU[product]["ingredients"]
+        # Check if there are sufficient resources to make an order.
+        if is_resource_sufficient(ingredients=order_ingredients):
+            print("test2")
+            total_coins = process_coins()
+            # Check if there is enough money to make an order.
+            if is_enough_money(item=product, amount=total_coins):
+                price = MENU[product]["cost"]
+                # Check if change is required.
+                if total_coins - price > 0:
+                    process_change(amount=total_coins, cost=price)
 
-
-run_machine()
+                make_coffee(ingredients=order_ingredients, profit=price)
+                print(f"Here is your {product}. Enjoy!")
+            else:
+                print("Sorry, that's not enough money.")
+    else:
+        should_continue = False
