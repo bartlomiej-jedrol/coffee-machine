@@ -68,48 +68,38 @@ def process_coins():
     return round(total, 2)
 
 
-def is_enough_money(item, amount):
-    """Calculates money difference between amount and cost."""
-    return amount - MENU[item]["cost"] >= 0
+def is_transaction_successful(amount, cost):
+    """Verifies if the transaction is successful."""
+    if amount >= cost:
+        if amount > cost:
+            change = round(amount - cost, 2)
+            print(f"Here is ${change} in change.")
+        resources["money"] += cost
+        return True
+    print("Sorry, that's not enough money.")
+    return False
 
 
-def process_change(amount, cost):
-    """Calculates money difference between amount and cost."""
-    print(f"Here is ${round(amount - cost, 2)} in change.")
-
-
-def make_coffee(ingredients, profit):
+def make_coffee(ingredients):
     """Makes a coffee. Deducts resources. Adds profit."""
     for ingredient in ingredients:
         resources[ingredient] -= ingredients[ingredient]
-    resources["money"] += profit
+    print(f"Here is your {product}. Enjoy!")
 
 
 should_continue = True
 while should_continue:
     product = input(" What would you like? espresso/latte/cappuccino: ")
-    print("test")
     if product == "off":
         should_continue = False
     elif product == "report":
         print_resources_report()
     elif product in ("espresso", "latte", "cappuccino"):
-        print("test1")
         order_ingredients = MENU[product]["ingredients"]
-        # Check if there are sufficient resources to make an order.
         if is_resource_sufficient(ingredients=order_ingredients):
-            print("test2")
             total_coins = process_coins()
-            # Check if there is enough money to make an order.
-            if is_enough_money(item=product, amount=total_coins):
-                price = MENU[product]["cost"]
-                # Check if change is required.
-                if total_coins - price > 0:
-                    process_change(amount=total_coins, cost=price)
-
-                make_coffee(ingredients=order_ingredients, profit=price)
-                print(f"Here is your {product}. Enjoy!")
-            else:
-                print("Sorry, that's not enough money.")
+            drink_cost = MENU[product]["cost"]
+            if is_transaction_successful(amount=total_coins, cost=drink_cost):
+                make_coffee(ingredients=order_ingredients)
     else:
         should_continue = False
